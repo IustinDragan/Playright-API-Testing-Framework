@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": ".NET 10 API Tests",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/RestfulBooker.ApiTests/bin/Debug/net10.0/RestfulBooker.ApiTests.dll",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    }
+  ]
+}

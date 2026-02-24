@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Microsoft.Playwright;
-using RestfulBooker.ApiTests.API;
 using RestfulBooker.ApiTests.Common;
 using RestfulBooker.ApiTests.Core;
 
@@ -34,10 +33,7 @@ public class BookingService : IBookingService
                 new APIRequestContextOptions
                 {
                       Data = JsonSerializer.Serialize(requestModel, JsonSerializerHelper.Options),
-                      Headers = new Dictionary<string, string>
-                    {
-                    {Constants.Cookie, Constants.TokenValue(token)}
-                    }
+                      Headers = HeaderFactory.AuthHeaders(token)
                 }
             );
       }
@@ -58,10 +54,7 @@ public class BookingService : IBookingService
                 Constants.BookingById(id),
                 new APIRequestContextOptions
                 {
-                      Headers = new Dictionary<string, string>
-                    {
-                   {Constants.Cookie, Constants.TokenValue(token)}
-                    }
+                      Headers = HeaderFactory.AuthHeaders(token)
                 }
             );
       }

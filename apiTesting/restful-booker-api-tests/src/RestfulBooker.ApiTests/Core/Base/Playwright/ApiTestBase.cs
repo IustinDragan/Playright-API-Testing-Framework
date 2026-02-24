@@ -26,11 +26,7 @@ public class ApiTestBase
                 {
                       BaseURL = _baseUrl,
                       Timeout = timeoutInMs,
-                      ExtraHTTPHeaders = new Dictionary<string, string>
-                    {
-                        { Constants.ContentType, Constants.ApplicationJson},
-                        { Constants.Accept, Constants.ApplicationJson }
-                    }
+                      ExtraHTTPHeaders = HeaderFactory.DefaulHeaders()
                 }
             );
       }

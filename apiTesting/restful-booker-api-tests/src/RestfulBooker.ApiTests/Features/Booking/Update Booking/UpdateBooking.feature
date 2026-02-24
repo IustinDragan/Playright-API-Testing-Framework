@@ -1,10 +1,12 @@
 @api @UpdateBooking @smoke
 Feature: Update Booking API
 
+      Background:
+            Given I have a valid authentication token
+
       Scenario: Update an existing booking
-            Given I am authenticated
-            And I have a valid booking payload
-            And I have a valid booking payload for update
+            And I prepare a valid booking payload
+            And I prepare a valid booking payload for update
             When I send a POST request to create a booking
             Then the response status code should be 200
             And the booking id should be returned
@@ -14,8 +16,7 @@ Feature: Update Booking API
 
       @skip
       Scenario: Update a specific booking by Id
-            Given I am authenticated
-            And I have a valid booking payload for update
+            And I prepare a valid booking payload for update
             When I send a PUT request to update the booking with id 28
             Then the response status code should be 200
             And booking values should be updated

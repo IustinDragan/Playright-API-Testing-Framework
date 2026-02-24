@@ -12,4 +12,5 @@ public class BookingScenarioContext
       public string? AuthToken { get; set; }
       public bool isValidPayload { get; set; } = true;
       public string? ResponseBody { get; set; }
+      public bool? apiReady { get; set; }
 }

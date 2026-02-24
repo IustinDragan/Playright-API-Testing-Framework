@@ -17,7 +17,7 @@ public class CreateBookingSteps
             _bookingScenarioContext = bookingScenarioContext;
       }
 
-      [Given(@"I have a valid booking payload")]
+      [Given(@"I prepare a valid booking payload")]
       public void GivenIHaveAValidBookingPayload()
       {
             #region Create Booking from JsonFile
@@ -31,6 +31,11 @@ public class CreateBookingSteps
             #region Create Booking from customer Builder
             //_bookingScenarioContext.CreateBookingRequest = BookingFactoryFromBuilder.ValidBooking().WithFirstName("from_custom_builder").Build<CreateBookingRequestModel>();
             #endregion
+      }
+      [Given(@"I prepare an invalid booking payload")]
+      public void GivenIPrepareAnInvalidBookingPayload()
+      {
+            _bookingScenarioContext.CreateBookingRequest = BookingFactoryFromBuilder.InvalidBooking().Build();
       }
 
       [When(@"I send a POST request to create a booking")]

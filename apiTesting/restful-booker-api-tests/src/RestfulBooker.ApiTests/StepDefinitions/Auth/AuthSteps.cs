@@ -18,7 +18,7 @@ public class AuthSteps
             _bookingScenarioContext = bookingScenarioContext;
       }
 
-      [Given(@"I am authenticated")]
+      [Given(@"I have a valid authentication token")]
       public async Task GivenIAmAuthenticated()
       {
             var authResponse = await _authService.AuthenticateAsync(_authCredentialsProvider.GetAdminCredentials());

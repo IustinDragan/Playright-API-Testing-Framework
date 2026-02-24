@@ -1,4 +1,5 @@
 using Microsoft.VisualStudio.TestPlatform.Common.DataCollection;
+using RestfulBooker.ApiTests.Common;
 using RestfulBooker.ApiTests.Core;
 using RestfulBooker.ApiTests.Data;
 using RestfulBooker.ApiTests.Helpers;
@@ -7,7 +8,7 @@ using TechTalk.SpecFlow;
 namespace RestfulBooker.ApiTests.Hooks;
 
 [Binding]
-public class SpecFlowHooks
+public class BookingHooks
 {
       private const int _defaultTimeoutMs = 30_000;
       private const int _slowTimeoutMs = 60_000;
@@ -15,7 +16,7 @@ public class SpecFlowHooks
       private readonly ApiTestBase _apiTestBase;
       private readonly SqliteService _db;
 
-      public SpecFlowHooks(ApiTestBase apiTestBase, ScenarioContext scenarioContext, SqliteService db)
+      public BookingHooks(ApiTestBase apiTestBase, ScenarioContext scenarioContext, SqliteService db)
       {
             _scenarioContext = scenarioContext;
             _apiTestBase = apiTestBase;
@@ -40,16 +41,20 @@ public class SpecFlowHooks
       {
             await _apiTestBase.CleanupApiContextAsync();
 
-            SpecFlowReportGenerator.RecordScenarioResult(_scenarioContext);
+            //Record the scenario result with Playwright Report Generator
+            PlaywrightReportGenerator.RecordScenarioResult(_scenarioContext);
+
+            //Record the scenario result with SpecFlow Report Generator
+            //SpecFlowReportGenerator.RecordScenarioResult(_scenarioContext);
       }
 
       [AfterTestRun]
       public static async Task AfterTestRun()
       {
+            //Playwright Report:
+            await PlaywrightReportGenerator.GenerateReportAsync();
+
             //SpecFlow Report:
             await SpecFlowReportGenerator.GenerateReportAsync();
-
-            //Playwright Report:
-            await PlaywrightReportHelper.OrganizeReportAsync();
       }
 }

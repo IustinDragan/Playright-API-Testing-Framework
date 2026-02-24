@@ -1,0 +1,10 @@
+{
+      "stepDefinitionSkeletonStyle":"CucumberExpression",
+      "featureLanguage":"en",
+      "bindingAssemblies":[],
+      "plugins":[
+            {
+                  "type": "LivingDocPlugin"
+            }
+      ]
+}

@@ -17,7 +17,7 @@ public class UpdateBookingSteps
             _bookingScenarioContext = bookingScenarioContext;
       }
 
-      [Given(@"I have a valid booking payload for update")]
+      [Given(@"I prepare a valid booking payload for update")]
       public void GivenIHaveAValidBookingPayloadForUpdate()
       {
             _bookingScenarioContext.UpdateBookingRequestModel = BookingFactoryFromJson.UpdateValidBookingFromJson();

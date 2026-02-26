@@ -58,4 +58,42 @@ public class BookingService : IBookingService
                 }
             );
       }
+
+      public async Task<IAPIResponse> UpdateBookingSwitchAsync(BookingUpdateMethod method, int id, UpdateBookingRequestModel requestModel, string token)
+      {
+            return method switch
+            {
+                  BookingUpdateMethod.Put => await SendUpdateAsync(id, requestModel, token, BookingUpdateMethod.Put),
+                  BookingUpdateMethod.Patch => await SendUpdateAsync(id, requestModel, token, BookingUpdateMethod.Patch),
+                  _ => throw new ArgumentOutOfRangeException(nameof(method), method, null)
+            };
+      }
+
+      public async Task<IAPIResponse> GetHealthCheck()
+      {
+            return await _apiContext.GetAsync(Constants.HealthCheck);
+      }
+
+      public async Task<IAPIResponse> PostHealthCheck()
+      {
+            return await _apiContext.PostAsync(Constants.HealthCheck);
+      }
+
+      private async Task<IAPIResponse> SendUpdateAsync(int id, UpdateBookingRequestModel requestModel, string token, BookingUpdateMethod verb)
+      {
+            var options = new APIRequestContextOptions
+            {
+                  Data = JsonSerializer.Serialize(requestModel, JsonSerializerHelper.Options),
+                  Headers = HeaderFactory.AuthHeaders(token)
+            };
+
+            var url = Constants.BookingById(id);
+
+            return verb switch
+            {
+                  BookingUpdateMethod.Put => await _apiContext.PutAsync(url, options),
+                  BookingUpdateMethod.Patch => await _apiContext.PatchAsync(Constants.BookingById(id), options),
+                  _ => throw new ArgumentOutOfRangeException(nameof(verb), verb, null)
+            };
+      }
 }

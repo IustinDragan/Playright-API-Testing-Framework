@@ -21,6 +21,7 @@ public static class Constants
       public const string BookingEndpoint = "/booking";
       public static string BookingById(int id) => $"{BookingEndpoint}/{id}";
       public const string AuthEndpoint = "/auth";
+      public const string HealthCheck = "/ping";
       #endregion
 
 

@@ -13,4 +13,5 @@ public class BookingScenarioContext
       public bool isValidPayload { get; set; } = true;
       public string? ResponseBody { get; set; }
       public bool? apiReady { get; set; }
+      public long? ResponseTimeInMs { get; set; }
 }

@@ -1,0 +1,109 @@
+/*
+ * Jenkinsfile - CI/CD Pipeline for RestfulBookerServiceTests
+ * 
+ * Runs .NET API tests by feature tag (@createbooking, @deletebooking)
+ * and publishes HTML test reports.
+ * 
+ * Prerequisites:
+ *   - Jenkins container built from Dockerfile.jenkins
+ *   - Local project mounted at /var/jenkins_home/workspace/local-project
+ */
+
+pipeline {
+    agent {
+        node {
+            label ''
+            customWorkspace '/tmp/jenkins-build'
+        }
+    }
+
+    environment {
+        LOCAL_PROJECT_MOUNT = '/var/jenkins_home/workspace/local-project'
+        PROJECT_SUBDIR = 'src/RestfulBooker.ApiTests'
+        TEST_RESULTS_DIR = '/tmp/jenkins-build/RestfulBooker.ApiTests/TestResults'
+        DOTNET_CLI_HOME = '/tmp/.dotnet'
+        DOTNET_NOLOGO = 'true'
+        DOTNET_CLI_TELEMETRY_OPTOUT = 'true'
+        DOTNET_SKIP_FIRST_TIME_EXPERIENCE = 'true'
+        NUGET_PACKAGES = '/tmp/.nuget/packages'
+        HOME = '/tmp'
+    }
+
+    stages {
+        stage('Setup') {
+            steps {
+                sh 'mkdir -p /tmp/.dotnet /tmp/.nuget/packages'
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                sh 'rm -rf /tmp/jenkins-build/* || true'
+                sh 'cp -r ${LOCAL_PROJECT_MOUNT}/* /tmp/jenkins-build/'
+                sh 'rm -rf ${TEST_RESULTS_DIR} || true'
+            }
+        }
+
+        stage('Restore') {
+            steps {
+                dir("${PROJECT_SUBDIR}") {
+                    sh 'dotnet restore RestfulBooker.ApiTests.csproj'
+                }
+            }
+        }
+
+        stage('Build') {
+            steps {
+                dir("${PROJECT_SUBDIR}") {
+                    sh 'dotnet build RestfulBooker.ApiTests.csproj --configuration Release --no-restore'
+                }
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'rm -rf ${TEST_RESULTS_DIR} && mkdir -p ${TEST_RESULTS_DIR}'
+                
+                // Run CreateBooking tests
+                dir("${PROJECT_SUBDIR}") {
+                    sh 'dotnet test RestfulBooker.ApiTests.csproj --configuration Release --no-build --filter "TestCategory=createbooking" --logger "html" --results-directory ./TestResults'
+                }
+                sh '''
+                    cd ${TEST_RESULTS_DIR}
+                    HTML_FILE=$(ls -t TestResult*.html 2>/dev/null | head -1)
+                    [ -n "$HTML_FILE" ] && mv "$HTML_FILE" "Results_CreateBooking_$(date +%Y%m%dT%H%M%S).html"
+                    rm -f *.trx
+                '''
+                
+                // Run DeleteBooking tests
+                dir("${PROJECT_SUBDIR}") {
+                    sh 'dotnet test RestfulBooker.ApiTests.csproj --configuration Release --no-build --filter "TestCategory=deletebooking" --logger "html" --results-directory ./TestResults'
+                }
+                sh '''
+                    cd ${TEST_RESULTS_DIR}
+                    HTML_FILE=$(ls -t TestResult*.html 2>/dev/null | head -1)
+                    [ -n "$HTML_FILE" ] && mv "$HTML_FILE" "Results_DeleteBooking_$(date +%Y%m%dT%H%M%S).html"
+                    rm -f *.trx
+                '''
+            }
+        }
+
+        stage('Publish Reports') {
+            steps {
+                publishHTML([
+                    allowMissing: true,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: false,
+                    reportDir: "${TEST_RESULTS_DIR}",
+                    reportFiles: '*.html',
+                    reportName: 'TestResults'
+                ])
+            }
+        }
+    }
+
+    post {
+        success { echo 'Tests completed successfully!' }
+        failure { echo 'Tests failed. Check the test results for details.' }
+    }
+}

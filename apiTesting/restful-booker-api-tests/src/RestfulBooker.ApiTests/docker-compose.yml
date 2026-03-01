@@ -1,0 +1,74 @@
+# =============================================================================
+# podman-compose.yml - Jenkins CI Container Configuration
+# =============================================================================
+#
+# This file defines a Jenkins container for running .NET tests locally.
+# It uses Podman (Docker-compatible) to run Jenkins with .NET SDK support.
+#
+# Prerequisites:
+#   - Podman installed (brew install podman on macOS)
+#   - podman-compose installed (pip install podman-compose)
+#
+# Usage:
+#   Start:   podman-compose up -d
+#   Stop:    podman-compose down
+#   Rebuild: podman-compose build --no-cache && podman-compose up -d
+#   Logs:    podman-compose logs -f jenkins
+#
+# Access Jenkins at: http://localhost:8080
+# Initial admin password: podman exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
+# =============================================================================
+
+# Compose file format version (3 is widely supported)
+version: "3"
+
+services:
+  # Jenkins CI server with .NET SDK
+  jenkins:
+    # Build custom image from Dockerfile.jenkins instead of using pre-built image
+    # This gives us Jenkins + .NET SDK 10.0
+    build:
+      context: .                        # Build context is current directory
+      dockerfile: Dockerfile.jenkins    # Use our custom Dockerfile
+    
+    # Container name for easy reference in commands
+    # Example: podman exec jenkins dotnet --version
+    container_name: jenkins
+    
+    # Port mappings (host:container)
+    ports:
+      - "8080:8080"    # Jenkins web UI - access at http://localhost:8080
+      - "50000:50000"  # Jenkins agent port - for connecting build agents
+    
+    # Environment variables passed to Jenkins
+    environment:
+      # Disable CSRF protection for local development
+      # WARNING: Do not use in production! This is only for local testing
+      # to avoid "HTTP 403" errors when configuring jobs
+      - JAVA_OPTS=-Dhudson.security.csrf.GlobalCrumbIssuerConfiguration.DISABLE_CSRF_PROTECTION=true
+    
+    # Volume mounts
+    volumes:
+      # Named volume for Jenkins data persistence
+      # Stores: jobs, plugins, credentials, build history
+      # Data survives container recreation
+      - jenkins_home:/var/jenkins_home
+      
+      # Mount local project directory into container
+      # This allows Jenkins to access your local code without Git
+      # Uses relative path: ../.. goes up from RestfulBookerServiceTests.Tests to project root
+      # Format: /host/path:/container/path
+      - ../..:/var/jenkins_home/workspace/local-project
+    
+    # Restart policy
+    # unless-stopped: Always restart unless manually stopped
+    # Ensures Jenkins comes back up after system reboot
+    restart: unless-stopped
+
+# Named volumes definition
+# These persist data across container restarts and rebuilds
+volumes:
+  # Jenkins home directory volume
+  # Contains all Jenkins configuration, jobs, and build history
+  # To reset Jenkins completely: podman volume rm restfulbookerservicetests_jenkins_home
+  jenkins_home:

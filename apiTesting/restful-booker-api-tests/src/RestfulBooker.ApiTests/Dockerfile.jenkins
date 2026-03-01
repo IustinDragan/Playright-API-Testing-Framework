@@ -1,0 +1,71 @@
+# =============================================================================
+# Dockerfile.jenkins - Custom Jenkins image with .NET SDK
+# =============================================================================
+#
+# This Dockerfile extends the official Jenkins LTS image to include:
+#   - .NET SDK 10.0 for building and testing .NET projects
+#   - ICU libraries required for .NET globalization support
+#
+# Build this image using:
+#   podman build -f Dockerfile.jenkins -t jenkins-dotnet .
+#
+# Or use with podman-compose (recommended):
+#   podman-compose build
+#   podman-compose up -d
+# =============================================================================
+
+# Start from the official Jenkins Long Term Support image
+# This provides a stable, production-ready Jenkins installation
+FROM jenkins/jenkins:lts
+
+# Switch to root user to install system packages
+# Jenkins image runs as 'jenkins' user by default
+USER root
+
+# Install required system dependencies:
+#   - wget: Download .NET install script
+#   - apt-transport-https: Required for HTTPS package sources
+#   - libicu-dev: International Components for Unicode (ICU) library
+#                 Required by .NET for globalization (dates, currencies, sorting)
+#                 Without this, .NET will fail with "Couldn't find a valid ICU package"
+RUN apt-get update && apt-get install -y \
+    wget \
+    apt-transport-https \
+    libicu-dev \
+    && rm -rf /var/lib/apt/lists/*
+# Cleanup apt cache to reduce image size
+
+# Install .NET SDK 10.0 using Microsoft's official install script
+# This script automatically detects the OS and installs the appropriate version
+RUN wget https://dot.net/v1/dotnet-install.sh -O /tmp/dotnet-install.sh \
+    && chmod +x /tmp/dotnet-install.sh \
+    # Install .NET 10.0 to /usr/share/dotnet
+    && /tmp/dotnet-install.sh --channel 10.0 --install-dir /usr/share/dotnet \
+    # Create symlink so 'dotnet' command works system-wide
+    && ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet \
+    # Cleanup install script
+    && rm /tmp/dotnet-install.sh
+
+# Create .dotnet directory for jenkins user
+# This directory stores .NET CLI configuration and tool cache
+# Must be owned by jenkins user to avoid permission errors
+RUN mkdir -p /var/jenkins_home/.dotnet \
+    && chown -R jenkins:jenkins /var/jenkins_home/.dotnet
+
+# Set environment variables for .NET
+# DOTNET_ROOT: Location where .NET SDK is installed
+ENV DOTNET_ROOT=/usr/share/dotnet
+# Add .NET to PATH so 'dotnet' command is available
+ENV PATH="${PATH}:/usr/share/dotnet"
+# Disable telemetry data collection to Microsoft
+ENV DOTNET_CLI_TELEMETRY_OPTOUT=true
+# Suppress the .NET welcome message on first run
+ENV DOTNET_NOLOGO=true
+# Directory for .NET CLI configuration (must be writable by jenkins user)
+ENV DOTNET_CLI_HOME=/var/jenkins_home/.dotnet
+# Skip the first-time experience setup wizard
+ENV DOTNET_SKIP_FIRST_TIME_EXPERIENCE=true
+
+# Switch back to jenkins user for security
+# Running Jenkins as root is not recommended
+USER jenkins
